@@ -35,7 +35,7 @@ extern const char* const MC_PREFIX;
 // background) and which generated on demand for certain hardware channels,
 // typically to compare measured to true hit data
 
-// MC truth information for digitized etector hits
+// MC truth information for digitized detector hits
 class MCHitInfo {
 public:
   MCHitInfo() : fMCTrack(0), fContam(0), fMCPos(0), fMCTime(0) {}
@@ -44,13 +44,14 @@ public:
   virtual ~MCHitInfo() {}
 
   void MCPrint() const;
+  void MCClear() { fMCTrack = fContam = 0; fMCPos = fMCTime = 0; }
 
   Int_t    fMCTrack;     // MC signal track number generating this hit
   Int_t    fContam;      // Indicator for contributions other than signal
   Double_t fMCPos;       // True MC track crossing position (m)
   Double_t fMCTime;      // Hit time (s)
 
-  ClassDef(MCHitInfo,0)  // Generic Monte Carlo hit info
+  ClassDef(MCHitInfo,1)  // Generic Monte Carlo hit info
 };
 
 // A MC physics track's interaction point at a tracker plane in the lab system.
@@ -58,7 +59,7 @@ class MCTrackPoint : public TObject {
 public:
   MCTrackPoint() : fMCTrack(0), fPlane(-1), fType(-1), fStatus(-1),
 		   fMCPoint(KBIG,KBIG,KBIG), fMCP(KBIG,KBIG,KBIG),
-		   fMCTime(KBIG), fDeltaE(KBIG), fDeflect(KBIG),
+		   fMCTime(KBIG), fDeltaE(KBIG), fDeflect(KBIG), fToF(KBIG),
 		   fHitResid(KBIG), fTrackResid(KBIG)  {}
   MCTrackPoint( Int_t mctrk, Int_t plane, Int_t type, const TVector3& point,
 		const TVector3& pvect )
@@ -86,17 +87,14 @@ public:
   Int_t    fPlane;    // Tracker plane/layer number
   Int_t    fType;     // Plane type (u,v,x etc.)
   Int_t    fStatus;   // Reconstruction status (typ != 0 -> failed to find)
-  TVector3 fMCPoint;  // Truth position of a MC physics track in a tracker plane (m)
+  TVector3 fMCPoint;  // Truth position of MC physics track in tracker plane (m)
   TVector3 fMCP;      // True momentum vector at this position (GeV)
   Double_t fMCTime;   // Arrival time wrt trigger (s)
   Double_t fDeltaE;   // Energy loss wrt prior plane, kBig if unknown (GeV)
-  Double_t fDeflect;  // Deflection angle wrt prior plane (rad)
-  Double_t fHitResid; // True residual reconstructed hit pos - MC hit pos (m)
+  Double_t fDeflect;  // Deflection angle wrt prior plane (rad) or kBig
+  Double_t fToF;      // Time-of-flight from prior plane (s) or kBig
+  Double_t fHitResid; // True residual nearest reconstr. hit pos - MC hit pos (m)
   Double_t fTrackResid; // True residual reconstructed track - MC hit pos (m)
-  //TODO:
-  // tof (deltaTime)
-  // fMCHitRes  // distance to reconstructed hit containing true MC signal
-  // enum of status bits for fStatus
 
   ClassDef(MCTrackPoint,1)  // Monte Carlo track interaction coordinates
 };

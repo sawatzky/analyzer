@@ -28,6 +28,7 @@ ChangeLog
 *.cdef
 *.png
 *.patch
+.root_hist
 
 #scons stuff
 config.log

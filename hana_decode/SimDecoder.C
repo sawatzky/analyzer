@@ -16,8 +16,12 @@ namespace Podd {
 // Prefix of our own global variables (MC truth data)
 const char* const MC_PREFIX = "MC.";
 
+// Default half-size of search window for reconstructed hits (m)
+Double_t MCTrackPoint::fgWindowSize = 1e-3;
+
 //_____________________________________________________________________________
-SimDecoder::SimDecoder() : fMCHits(0), fMCTracks(0), fIsSetup(false)
+SimDecoder::SimDecoder()
+  : fWeight(1.0), fMCHits(0), fMCTracks(0), fIsSetup(false)
 {
   // Constructor. Derived classes must allocate the track and hit
   // TClonesArrays using their respective hit and track classes
@@ -63,7 +67,7 @@ MCHitInfo SimDecoder::GetMCHitInfo( Int_t crate, Int_t slot, Int_t chan ) const
   return MCHitInfo();
 }
 
-//-----------------------------------------------------------------------------
+//_____________________________________________________________________________
 Int_t SimDecoder::DefineVariables( THaAnalysisObject::EMode mode )
 {
   // Define generic global variables. Derived classes may override or extend
@@ -76,6 +80,8 @@ Int_t SimDecoder::DefineVariables( THaAnalysisObject::EMode mode )
   fIsSetup = ( mode == THaAnalysisObject::kDefine );
 
   RVarDef vars[] = {
+    // Event info
+    { "weight",    "Event weight",        "fWeight" },
     // Generated hit and track info. Just report the sizes of the arrays.
     // Anything beyond this requires the type of the actual hit and
     // track classes.
@@ -90,6 +96,10 @@ Int_t SimDecoder::DefineVariables( THaAnalysisObject::EMode mode )
                                     "fMCPoints.Podd::MCTrackPoint.fType" },
     { "pt.status", "Reconstruction status",
                                   "fMCPoints.Podd::MCTrackPoint.fStatus" },
+    { "pt.nfound", "# reconstructed hits found near this point",
+                                  "fMCPoints.Podd::MCTrackPoint.fNFound" },
+    { "pt.clustsz",  "Size of closest reconstructed cluster",
+                               "fMCPoints.Podd::MCTrackPoint.fClustSize" },
     { "pt.time",   "Track arrival time [s]",
                                   "fMCPoints.Podd::MCTrackPoint.fMCTime" },
     { "pt.p",      "Track momentum [GeV]",
@@ -134,12 +144,50 @@ Int_t SimDecoder::DefineVariables( THaAnalysisObject::EMode mode )
 }
 
 //_____________________________________________________________________________
+MCTrack::MCTrack( Int_t number, Int_t pid,
+		  const TVector3& vertex, const TVector3& momentum )
+  : fNumber(number), fPID(pid), fOrigin(vertex),
+    fMomentum(momentum), fNHits(0), fHitBits(0), fNHitsFound(0), fFoundBits(0),
+    fReconFlags(0), fContamFlags(0), fMatchval(KBIG), fFitRank(-1),
+    fTrackRank(-1)
+{
+  for( Int_t i = 0; i < NFP; ++i ) {
+    fMCFitPar[i] = KBIG;
+    fRcFitPar[i] = KBIG;
+  }
+}
+
+//_____________________________________________________________________________
+MCTrack::MCTrack()
+  : fNumber(0), fPID(0), fNHits(0), fHitBits(0), fNHitsFound(0),
+    fFoundBits(0), fReconFlags(0), fContamFlags(0), fMatchval(KBIG),
+    fFitRank(-1), fTrackRank(-1)
+{
+  for( Int_t i = 0; i < NFP; ++i ) {
+    fMCFitPar[i] = KBIG;
+    fRcFitPar[i] = KBIG;
+  }
+}
+
+//_____________________________________________________________________________
+void MCTrack::Print( const Option_t* /*opt*/ ) const
+{
+  // Print MCTrack info
+
+  cout << "track: num = " << fNumber
+       << ", PID = " << fPID
+       << endl;
+  cout << "  Origin    = ";  fOrigin.Print();
+  cout << "  Momentum  = ";  fMomentum.Print();
+}
+
+//_____________________________________________________________________________
 void MCHitInfo::MCPrint() const
 {
   // Print MC digitized hit info
 
   cout << " MCtrack = " << fMCTrack
-       << ", MCpos = " << fMCPos
+       << ", MCpos = "  << fMCPos
        << ", MCtime = " << fMCTime
        << ", num_bg = " << fContam
        << endl;
@@ -185,5 +233,7 @@ void MCTrackPoint::Print( Option_t* ) const
 
 } // end namespace Podd
 
-ClassImp(Podd::SimDecoder)
 ClassImp(Podd::MCHitInfo)
+ClassImp(Podd::MCTrack)
+ClassImp(Podd::MCTrackPoint)
+ClassImp(Podd::SimDecoder)

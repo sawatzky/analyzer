@@ -13,6 +13,9 @@
 #include <map>
 #include <vector>
 #include "Rtypes.h"
+//#include "Decoder.h"
+
+namespace Decoder {
 
 class EpicsChan {
 // utility class of one epics channel
@@ -53,7 +56,7 @@ private:
   Double_t dvalue,timestamp;
 };
 
-typedef std::map< std::string, std::vector<EpicsChan> >::value_type epVal;
+typedef std::map< std::string, std::vector<Decoder::EpicsChan> >::value_type epVal;
 
 class THaEpics {
 
@@ -66,7 +69,7 @@ public:
 // Get tagged string value nearest 'event'
    std::string GetString (const char* tag, int event=0) const;
    Double_t GetTimeStamp(const char* tag, int event=0) const;
-   int LoadData (const int* evbuffer, int event=0);  // load the data
+   int LoadData (const UInt_t* evbuffer, int event=0);  // load the data
    Bool_t IsLoaded(const char* tag) const;
    void Print();
 
@@ -79,5 +82,7 @@ private:
    ClassDef(THaEpics,0)  // EPICS data 
 
 };
+
+}
 
 #endif

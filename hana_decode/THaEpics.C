@@ -29,6 +29,8 @@
 
 using namespace std;
 
+namespace Decoder {
+
 void THaEpics::Print() {
   cout << "\n\n====================== \n";
   cout << "Print of Epics Data : "<<endl;
@@ -122,7 +124,7 @@ Int_t THaEpics::FindEvent(const vector<EpicsChan>& ep, int event) const
 }
         
 
-int THaEpics::LoadData(const int* evbuffer, int evnum)
+int THaEpics::LoadData(const UInt_t* evbuffer, int evnum)
 { 
   // load data from the event buffer 'evbuffer' 
   // for event nearest 'evnum'.
@@ -179,4 +181,6 @@ int THaEpics::LoadData(const int* evbuffer, int evnum)
   return 1;
 }
 
-ClassImp(THaEpics)
+}
+
+ClassImp(Decoder::THaEpics)

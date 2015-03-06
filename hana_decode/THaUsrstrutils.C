@@ -17,10 +17,16 @@
 #include "TMath.h"
 #include "TRegexp.h"
 #include <cctype>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <vector>
+#include <iostream>
 
 using namespace std;
+
+namespace Decoder {
 
 const int           THaUsrstrutils::MAX     = 5000;
 const unsigned long THaUsrstrutils::LONGMAX = 0x7FFFFFFF;
@@ -98,7 +104,7 @@ void THaUsrstrutils::getflagpos_instring(const char *constr, const char *s,
   return;
 }
   
-void THaUsrstrutils::string_from_evbuffer(const int *evbuffer, int nlen )
+void THaUsrstrutils::string_from_evbuffer(const UInt_t* evbuffer, int nlen )
 {
 // Routine string_from_evbuffer loads the configstr from the event buffer.
 // It has the same strengths and weaknesses as the DAQ code,
@@ -220,6 +226,7 @@ void THaUsrstrutils::string_from_file(const char *ffile_name)
   }
 }
 
+}
 
-ClassImp(THaUsrstrutils)
+ClassImp(Decoder::THaUsrstrutils)
 

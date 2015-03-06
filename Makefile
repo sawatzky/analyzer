@@ -35,6 +35,9 @@ ROOTCFLAGS   := $(shell root-config --cflags)
 ROOTLIBS     := $(shell root-config --libs)
 ROOTGLIBS    := $(shell root-config --glibs)
 ROOTBIN      := $(shell root-config --bindir)
+ROOTINC      := -I$(shell root-config --incdir)
+CXX          := $(shell root-config --cxx)
+CC           := $(shell root-config --cc)
 
 HA_DIR       := $(shell pwd)
 DCDIR        := hana_decode
@@ -45,14 +48,13 @@ SUBDIRS      := $(DCDIR) $(SCALERDIR)
 INCDIRS      := $(addprefix $(HA_DIR)/, src $(SUBDIRS))
 HA_DICT      := haDict
 
-LIBS         := 
-GLIBS        := 
+LIBS         :=
+GLIBS        :=
 
-INCLUDES     := $(ROOTCFLAGS) $(addprefix -I, $(INCDIRS) )
+INCLUDES     := $(addprefix -I, $(INCDIRS) )
 
 ifeq ($(ARCH),solarisCC5)
 # Solaris CC 5.0
-CXX          := CC
 ifdef DEBUG
   CXXFLG     := -g
   LDFLAGS    := -g
@@ -73,7 +75,6 @@ endif
 
 ifeq ($(ARCH),linux)
 # Linux with egcs (>= RedHat 5.2)
-CXX          := g++
 ifdef DEBUG
   CXXFLG     := -g -O0
   LDFLAGS    := -g -O0
@@ -96,13 +97,12 @@ CXXVER       := $(shell g++ --version | head -1 | sed 's/.* \([0-9]\)\..*/\1/')
 DEFINES      += $(shell getconf LFS_CFLAGS)
 ifeq ($(CXXVER),4)
 CXXFLAGS     += -Wextra -Wno-missing-field-initializers
-DICTCXXFLG   := -Wno-strict-aliasing 
+DICTCXXFLG   := -Wno-strict-aliasing
 endif
 endif
 
 ifeq ($(ARCH),macosx)
 # EXPERIMENTAL: Mac OS X with Xcode/gcc 3.x
-CXX          := g++
 ifdef DEBUG
   CXXFLG     := -g -O0
   LDFLAGS    := -g -O0
@@ -123,16 +123,12 @@ SONAME       := -Wl,-install_name,@rpath/
 CXXVER       := $(shell g++ --version | head -1 | sed 's/.* \([0-9]\)\..*/\1/')
 ifeq ($(CXXVER),4)
 CXXFLAGS     += -Wextra -Wno-missing-field-initializers
-DICTCXXFLG   := -Wno-strict-aliasing 
+DICTCXXFLG   := -Wno-strict-aliasing
 endif
 endif
 
 #FIXME: requires gcc 3 or up - test in configure script
 DEFINES       += -DHAS_SSTREAM
-
-ifeq ($(CXX),)
-$(error $(ARCH) invalid architecture)
-endif
 
 ifdef ONLINE_ET
 
@@ -156,12 +152,8 @@ ifdef WITH_DEBUG
 DEFINES      += -DWITH_DEBUG
 endif
 
-# External EVIO support
-INCLUDES     += -I$(EVIO_INCDIR)
-SYSLIBS      += -L$(EVIO_LIBDIR) -levio
-
-CXXFLAGS      = $(CXXFLG) $(CXXEXTFLG) $(INCLUDES) $(DEFINES)
-CFLAGS        = $(CXXFLG) $(INCLUDES) $(DEFINES)
+CXXFLAGS      = $(CXXFLG) $(CXXEXTFLG) $(ROOTCFLAGS) $(INCLUDES) $(DEFINES)
+CFLAGS        = $(CXXFLG) $(ROOTCFLAGS) $(INCLUDES) $(DEFINES)
 LIBS         += $(ROOTLIBS) $(SYSLIBS)
 GLIBS        += $(ROOTGLIBS) $(SYSLIBS)
 DEFINES      += $(PODD_EXTRA_DEFINES)
@@ -215,7 +207,8 @@ SRC          := src/THaFormula.C src/THaVform.C src/THaVhist.C \
 		src/THaG0Helicity.C src/THaADCHelicity.C src/THaHelicity.C \
 		src/THaPhotoReaction.C src/THaSAProtonEP.C \
 		src/THaTextvars.C src/THaQWEAKHelicity.C \
-		src/THaQWEAKHelicityReader.C
+		src/THaQWEAKHelicityReader.C src/THaEvtTypeHandler.C \
+		src/THaScalerEvtHandler.C
 
 ifdef ONLINE_ET
 SRC += src/THaOnlRun.C
@@ -317,7 +310,7 @@ endif
 
 $(HA_DICT).C: $(RCHDR) $(HA_LINKDEF)
 	@echo "Generating dictionary $(HA_DICT)..."
-	$(ROOTBIN)/rootcint -f $@ -c $(INCLUDES) $(DEFINES) $^
+	$(ROOTBIN)/rootcint -f $@ -c $(ROOTINC) $(INCLUDES) $(DEFINES) $^
 
 
 #---------- Extra libraries ----------------------------------------
@@ -328,7 +321,7 @@ $(LIBNORMANA):	$(LNA_HDR) $(LNA_OBJS)
 
 $(LNA_DICT).C:	$(LNA_HDR) $(LNA_LINKDEF)
 		@echo "Generating dictionary $(LNA_DICT)..."
-		rootcint -f $@ -c $(INCLUDES) $(DEFINES) $^
+		rootcint -f $@ -c $(ROOTINC) $(INCLUDES) $(DEFINES) $^
 
 #---------- Main program -------------------------------------------
 analyzer:	src/main.o $(LIBDC) $(LIBSCALER) $(LIBHALLA)
@@ -392,7 +385,7 @@ endif
 .PHONY: all clean realclean srcdist subdirs
 
 
-###--- DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT 
+###--- DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT
 ###    YOU ARE DOING
 
 .SUFFIXES:
@@ -406,7 +399,7 @@ endif
 #	@$(SHELL) -ec '$(CXX) -MM $(CXXFLAGS) -c $< \
 #		| sed '\''s%\($*\)\.o[ :]*%\1.o $@ : %g'\'' > $@; \
 #		[ -s $@ ] || rm -f $@'
-	@$(SHELL) -ec '$(MAKEDEPEND) -MM $(INCLUDES) $(DEFINES) -c $< \
+	@$(SHELL) -ec '$(MAKEDEPEND) -MM $(ROOTINC) $(INCLUDES) $(DEFINES) -c $< \
 		| sed '\''s%^.*\.o%$*\.o%g'\'' \
 		| sed '\''s%\($*\)\.o[ :]*%\1.o $@ : %g'\'' > $@; \
 		[ -s $@ ] || rm -f $@'
